@@ -87,6 +87,7 @@ const SearchHistoryComponent =
         if (searchHistory.length === 0) {
             return <View />
         }
+        console.log('searchHistory', searchHistory.length);
 
         return (
             <BottomSheet

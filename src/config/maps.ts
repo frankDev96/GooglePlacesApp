@@ -1,5 +1,5 @@
 export const GOOGLE_MAPS_CONFIG = {
-    API_KEY: 'AIzaSyCCL7FJWSmzkI2UhcQq8Iy51knnIN_Bc-s',
+    API_KEY: 'place your key here',
 };
 
 export const MAP_DEFAULTS = {

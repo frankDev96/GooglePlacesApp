@@ -25,9 +25,21 @@ const MapViewComponent = () => {
     const [coordinate, setCoordinate] = useState(MAP_DEFAULTS.INITIAL_REGION);
     const [placeName, setPlaceName] = useState('');
     const [placeAddress, setPlaceAddress] = useState('');
-    const [showHistory, setShowHistory] = useState(false);
     const historyComponentRef = useRef<{ loadSearchHistory: () => void } | null>(null)
     const mapRef = useRef<MapView>(null);
+    const markerRef = useRef(null);
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (markerRef.current !== null) {
+                markerRef.current.showCallout();
+            }
+        }, 100); // Delay of 1 second
+
+        return () => clearTimeout(timeout);
+    }, [placeName]);
+
+
 
 
     const requestLocationPermission = async () => {
@@ -104,7 +116,8 @@ const MapViewComponent = () => {
                 timestamp: Date.now(),
             };
 
-            history = [newItem, ...history].slice(0, 10);
+            // history = [newItem, ...history].slice(0, 10);
+            history = [newItem, ...history]
             await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
 
             setTimeout(() => {
@@ -176,7 +189,7 @@ const MapViewComponent = () => {
                 showsUserLocation={false}
                 showsMyLocationButton={false}
             >
-                <Marker coordinate={coordinate} pinColor="#2196F3">
+                <Marker coordinate={coordinate} pinColor="#2196F3" ref={markerRef}>
                     <Callout tooltip style={styles.callout}>
                         <View style={styles.calloutContainer}>
                             <Text style={styles.calloutTitle}>{placeName}</Text>
@@ -215,21 +228,30 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 8,
         padding: 12,
-        maxWidth: 200,
+        // maxWidth: 200,
         elevation: 5,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
     },
+    callout: {
+        backgroundColor: 'white',
+        // padding: 10,
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
     calloutTitle: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
         marginBottom: 4,
         color: '#333',
     },
     calloutAddress: {
-        fontSize: 14,
+        fontSize: 11,
         color: '#666',
     },
     contentContainer: {
