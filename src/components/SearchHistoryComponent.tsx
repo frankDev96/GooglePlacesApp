@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
+import BottomSheet, { BottomSheetFlatList, } from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface SearchHistoryItem {
@@ -84,7 +84,6 @@ const SearchHistoryComponent =
         const handleHistoryItemPress = useCallback((item: SearchHistoryItem) => {
             onHistoryItemSelect(item);
             bottomSheetRef.current?.snapToIndex(0);
-            // bottomSheetRef.current?.close();
         }, [onHistoryItemSelect]);
 
         const renderHistoryItem = ({ item }: { item: SearchHistoryItem }) => (
@@ -109,23 +108,23 @@ const SearchHistoryComponent =
                 ref={bottomSheetRef}
                 index={0}
                 snapPoints={snapPoints}
+                enableDynamicSizing={true}
             >
-                <BottomSheetView style={styles.contentContainer}>
-                    <View style={styles.contentContainer}>
-                        <View style={styles.header}>
-                            <Text style={styles.title}>Search History</Text>
-                            <TouchableOpacity onPress={clearHistoryAlert}>
-                                <Text style={styles.clearButton}>Clear All</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <FlatList
-                            data={searchHistory}
-                            renderItem={renderHistoryItem}
-                            keyExtractor={(item) => item.timestamp.toString()}
-                            style={styles.list}
-                        />
+                <View style={styles.contentContainer}>
+                    <View style={styles.header}>
+                        <Text style={styles.title}>Previous searches</Text>
+                        <TouchableOpacity onPress={clearHistoryAlert}>
+                            <Text style={styles.clearButton}>Clear All</Text>
+                        </TouchableOpacity>
                     </View>
-                </BottomSheetView>
+                    <BottomSheetFlatList
+                        data={searchHistory}
+                        renderItem={renderHistoryItem}
+                        keyExtractor={(item) => item.timestamp.toString()}
+                        style={styles.list}
+                        contentContainerStyle={styles.listContent}
+                    />
+                </View>
             </BottomSheet>
         );
     })
@@ -163,10 +162,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     list: {
-        flex: 1,
+        maxHeight: Dimensions.get('window').height * 0.7,
     },
     listContent: {
-        paddingHorizontal: 16,
+        marginBottom: 30,
     },
     historyItem: {
         paddingHorizontal: 26,
@@ -191,4 +190,4 @@ const styles = StyleSheet.create({
     }),
 });
 
-export default SearchHistoryComponent;
+export default memo(SearchHistoryComponent);

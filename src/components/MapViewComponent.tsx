@@ -7,8 +7,8 @@ import {
     Alert,
     Keyboard,
 } from 'react-native';
-import React, { useState, useEffect, useRef, } from 'react';
-import MapView, { Callout, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import React, { useState, useEffect, useRef, memo, } from 'react';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MAP_DEFAULTS } from '../config/maps';
@@ -171,7 +171,6 @@ const MapViewComponent = () => {
             setPlaceName(details.name || '');
             setPlaceAddress(details.formatted_address || '');
             saveToHistory(details);
-            getCurrentLocation(false); // Don't update coordinate when address is set
         }
     };
 
@@ -310,4 +309,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default MapViewComponent;
+export default memo(MapViewComponent);
