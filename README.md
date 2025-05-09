@@ -1,4 +1,61 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Google Places App
+
+A React Native application for searching and saving Google Places locations.
+
+## Installation
+
+1. Clone the repository
+2. Install dependencies:
+```
+npm install
+```
+3. For iOS:
+```
+cd ios
+pod install
+cd ..
+```
+4. Install required global packages:
+```
+npm install -g react-native-cli
+```
+
+## Running the App
+
+- iOS:
+```
+npx react-native run-ios
+```
+- Android:
+```
+npx react-native run-android
+```
+
+## Dependencies
+
+Main dependencies include:
+- React Native
+- React Native Maps
+- React Native Geolocation
+- React Native Async Storage
+
+## Configuration
+
+1. Create a `.env` file in the root directory
+2. Add your Google Maps API key:
+```
+GOOGLE_MAPS_API_KEY=your_api_key_here
+```
+3. Make sure to configure the API key in both iOS and Android projects.
+
+## Development Notes
+
+- Use `npm start` to start the Metro bundler
+- Use `npm test` to run unit tests
+
+## License
+
+MIT
 
 # Getting Started
 
