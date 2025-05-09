@@ -1,10 +1,11 @@
 import { View, Text, StyleSheet } from 'react-native'
 import React from 'react'
+import MapViewComponent from '../components/MapViewComponent'
 
 const HomeScreen = () => {
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Welcome to Google Places App</Text>
+            <MapViewComponent />
         </View>
     )
 }
