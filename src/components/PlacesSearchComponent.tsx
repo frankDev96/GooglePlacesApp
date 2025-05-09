@@ -9,7 +9,16 @@ interface Place {
 }
 
 interface PlacesSearchComponentProps {
-    onPlaceSelect: (details: any) => void;
+    onPlaceSelect: (details: {
+        geometry: {
+            location: {
+                lat: number;
+                lng: number;
+            };
+        };
+        name?: string;
+        formatted_address?: string;
+    }) => void;
 }
 
 const PlacesSearchComponent: React.FC<PlacesSearchComponentProps> = ({ onPlaceSelect }) => {

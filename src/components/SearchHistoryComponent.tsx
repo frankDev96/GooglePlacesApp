@@ -15,6 +15,10 @@ interface SearchHistoryItem {
 
 interface SearchHistoryComponentProps {
     onHistoryItemSelect: (item: SearchHistoryItem) => void;
+    coordinate: {
+        latitude: number;
+        longitude: number;
+    }
 }
 
 const HISTORY_STORAGE_KEY = '@search_history';
@@ -22,7 +26,7 @@ const HISTORY_STORAGE_KEY = '@search_history';
 
 const SearchHistoryComponent =
     React.forwardRef<{ loadSearchHistory: () => void }, SearchHistoryComponentProps>((
-        { onHistoryItemSelect, },
+        { onHistoryItemSelect, coordinate },
         ref
     ) => {
         const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
@@ -70,31 +74,23 @@ const SearchHistoryComponent =
                 style={styles.historyItem}
                 onPress={() => handleHistoryItemPress(item)}
             >
-                <Text style={styles.historyItemTitle}>{item.name}</Text>
-                <Text style={styles.historyItemAddress}>{item.address}</Text>
-                <Text style={styles.historyItemTime}>
+                <Text style={styles.historyItemTitle(coordinate?.latitude == item?.coordinates?.latitude)}>{item.name}</Text>
+                <Text style={styles.historyItemAddress(coordinate?.latitude == item?.coordinates?.latitude)}>{item.address}</Text>
+                <Text style={styles.historyItemTime(coordinate?.latitude == item?.coordinates?.latitude)}>
                     {new Date(item.timestamp).toLocaleString()}
                 </Text>
             </TouchableOpacity>
         );
 
-
-
-        const handleSheetChanges = useCallback((index: number) => {
-            console.log('handleSheetChanges', index);
-        }, []);
-
         if (searchHistory.length === 0) {
             return <View />
         }
-        console.log('searchHistory', searchHistory.length);
 
         return (
             <BottomSheet
                 ref={bottomSheetRef}
                 index={0}
                 snapPoints={snapPoints}
-                onChange={handleSheetChanges}
             >
                 <BottomSheetView style={styles.contentContainer}>
                     <View style={styles.contentContainer}>
@@ -160,21 +156,21 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
     },
-    historyItemTitle: {
+    historyItemTitle: (selected: boolean) => ({
         fontSize: 14,
         fontWeight: '600',
-        color: '#333',
+        color: selected ? '#ff6b6b' : '#333',
         marginBottom: 4,
-    },
-    historyItemAddress: {
+    }),
+    historyItemAddress: (selected: boolean) => ({
         fontSize: 12,
-        color: '#666',
+        color: selected ? '#ff6b6b' : '#333',
         marginBottom: 4,
-    },
-    historyItemTime: {
+    }),
+    historyItemTime: (selected: boolean) => ({
         fontSize: 10,
-        color: '#999',
-    },
+        color: selected ? '#ff6b6b' : '#333',
+    }),
 });
 
 export default SearchHistoryComponent;

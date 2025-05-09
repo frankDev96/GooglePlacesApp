@@ -1,28 +1,34 @@
 import {
     View,
-    Text,
+
     StyleSheet,
-    Dimensions,
     Platform,
     PermissionsAndroid,
     Alert,
     Keyboard,
 } from 'react-native';
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, } from 'react';
 import MapView, { Callout, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GOOGLE_MAPS_CONFIG, MAP_DEFAULTS } from '../config/maps';
+import { MAP_DEFAULTS } from '../config/maps';
 import PlacesSearchComponent from './PlacesSearchComponent';
 import SearchHistoryComponent from './SearchHistoryComponent';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import CustomMarker from './CustomMarker';
 
 const HISTORY_STORAGE_KEY = '@search_history';
 
 const MapViewComponent = () => {
-    const [loading, setLoading] = useState(true);
-    const [region, setRegion] = useState(MAP_DEFAULTS.INITIAL_REGION);
-    const [coordinate, setCoordinate] = useState(MAP_DEFAULTS.INITIAL_REGION);
+    const [region, setRegion] = useState<{
+        latitude: number;
+        longitude: number;
+        latitudeDelta: number;
+        longitudeDelta: number;
+    }>(MAP_DEFAULTS.INITIAL_REGION);
+    const [coordinate, setCoordinate] = useState<{
+        latitude: number;
+        longitude: number;
+    }>(MAP_DEFAULTS.INITIAL_REGION);
     const [placeName, setPlaceName] = useState('');
     const [placeAddress, setPlaceAddress] = useState('');
     const historyComponentRef = useRef<{ loadSearchHistory: () => void } | null>(null)
@@ -31,7 +37,7 @@ const MapViewComponent = () => {
 
     useEffect(() => {
         const timeout = setTimeout(() => {
-            if (markerRef.current !== null) {
+            if (markerRef.current !== null && placeName !== '') {
                 markerRef.current.showCallout();
             }
         }, 100); // Delay of 1 second
@@ -67,12 +73,10 @@ const MapViewComponent = () => {
         } catch (err) {
             console.warn(err);
             Alert.alert('Error', 'Failed to get location permission');
-        } finally {
-            setLoading(false);
         }
     };
 
-    const getCurrentLocation = () => {
+    const getCurrentLocation = (updateCoordinate = true) => {
         Geolocation.getCurrentPosition(
             position => {
                 const { latitude, longitude } = position.coords;
@@ -83,25 +87,33 @@ const MapViewComponent = () => {
                     longitudeDelta: 0.0421,
                 };
                 setRegion(newRegion);
-                setCoordinate({
-                    latitude,
-                    longitude,
-                });
+                if (updateCoordinate) {
+                    setCoordinate({
+                        latitude,
+                        longitude,
+                    });
+                }
             },
             error => {
                 console.log(error);
                 Alert.alert('Error', 'Failed to get current location');
-                setLoading(false);
             },
             { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
         );
     };
 
-    useEffect(() => {
-        requestLocationPermission();
-    }, []);
+    // Removed automatic location request on component mount
 
-    const saveToHistory = async (searchItem: any) => {
+    const saveToHistory = async (searchItem: {
+        name: string;
+        formatted_address: string;
+        geometry: {
+            location: {
+                lat: number;
+                lng: number;
+            };
+        };
+    }) => {
         try {
             const historyString = await AsyncStorage.getItem(HISTORY_STORAGE_KEY);
             let history = historyString ? JSON.parse(historyString) : [];
@@ -115,9 +127,13 @@ const MapViewComponent = () => {
                 },
                 timestamp: Date.now(),
             };
+            const findIndex = history.findIndex(item => searchItem?.name == item?.name)
 
-            // history = [newItem, ...history].slice(0, 10);
+            if (findIndex !== -1) {
+                history.splice(findIndex, 1);
+            }
             history = [newItem, ...history]
+
             await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
 
             setTimeout(() => {
@@ -129,7 +145,16 @@ const MapViewComponent = () => {
         }
     };
 
-    const handlePlaceSelect = (details: any) => {
+    const handlePlaceSelect = (details: {
+        geometry: {
+            location: {
+                lat: number;
+                lng: number;
+            };
+        };
+        name?: string;
+        formatted_address?: string;
+    }) => {
         if (details?.geometry?.location) {
             const { lat, lng } = details.geometry.location;
             const newRegion = {
@@ -146,10 +171,18 @@ const MapViewComponent = () => {
             setPlaceName(details.name || '');
             setPlaceAddress(details.formatted_address || '');
             saveToHistory(details);
+            getCurrentLocation(false); // Don't update coordinate when address is set
         }
     };
 
-    const handleHistoryItemSelect = (item: any) => {
+    const handleHistoryItemSelect = (item: {
+        coordinates: {
+            latitude: number;
+            longitude: number;
+        };
+        name: string;
+        address: string;
+    }) => {
         const newRegion = {
             latitude: item.coordinates.latitude,
             longitude: item.coordinates.longitude,
@@ -163,9 +196,25 @@ const MapViewComponent = () => {
         });
         setPlaceName(item.name);
         setPlaceAddress(item.address);
+        const newItem = {
+            name: item.name,
+            formatted_address: item.address,
+            geometry: {
+                location: {
+                    lat: item.coordinates.latitude,
+                    lng: item.coordinates.longitude,
+                },
+            },
+        }
+        saveToHistory(newItem);
     };
 
-    const animateToRegion = (newRegion: any) => {
+    const animateToRegion = (newRegion: {
+        latitude: number;
+        longitude: number;
+        latitudeDelta: number;
+        longitudeDelta: number;
+    }) => {
         mapRef.current?.animateToRegion(newRegion, 1000);
     };
 
@@ -188,19 +237,20 @@ const MapViewComponent = () => {
                 region={region}
                 showsUserLocation={false}
                 showsMyLocationButton={false}
+                showsCompass={false}
+                showsIndoors={false}
+                zoomControlEnabled={false}
+                toolbarEnabled={false}
+                loadingEnabled={true}
+                loadingIndicatorColor="blue"
+                loadingBackgroundColor="rgba(255, 255, 255, 0.7)"
             >
-                <Marker coordinate={coordinate} pinColor="#2196F3" ref={markerRef}>
-                    <Callout tooltip style={styles.callout}>
-                        <View style={styles.calloutContainer}>
-                            <Text style={styles.calloutTitle}>{placeName}</Text>
-                            <Text style={styles.calloutAddress}>{placeAddress}</Text>
-                        </View>
-                    </Callout>
-                </Marker>
+                <CustomMarker coordinate={coordinate} />
             </MapView>
 
             <SearchHistoryComponent
                 ref={historyComponentRef}
+                coordinate={coordinate}
                 onHistoryItemSelect={handleHistoryItemSelect}
             />
         </View>
@@ -216,9 +266,9 @@ const styles = StyleSheet.create({
     },
     searchContainer: {
         position: 'absolute',
-        top: 20,
-        left: 20,
-        right: 20,
+        top: 16,
+        left: 16,
+        right: 16,
         zIndex: 1,
     },
     map: {
@@ -228,7 +278,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 8,
         padding: 12,
-        // maxWidth: 200,
         elevation: 5,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -236,13 +285,10 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
     },
     callout: {
-        backgroundColor: 'white',
-        // padding: 10,
-        borderRadius: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        position: 'absolute',
+        flex: -1,
+        padding: 0,
+        backgroundColor: 'transparent',
     },
     calloutTitle: {
         fontSize: 14,
@@ -259,6 +305,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
     },
+    marker: {
+
+    }
 });
 
 export default MapViewComponent;
