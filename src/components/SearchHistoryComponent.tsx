@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -62,6 +62,24 @@ const SearchHistoryComponent =
                 console.error('Error clearing search history:', error);
             }
         };
+        const clearHistoryAlert = async () => {
+            Alert.alert(
+                'Clear History',
+                'Are you sure you want to clear your search history?',
+                [
+                    {
+                        text: 'Cancel',
+                        style: 'cancel',
+                    },
+                    {
+                        text: 'Clear',
+                        onPress: clearHistory,
+                        style: 'destructive',
+
+                    },
+                ]
+            )
+        }
 
         const handleHistoryItemPress = useCallback((item: SearchHistoryItem) => {
             onHistoryItemSelect(item);
@@ -96,7 +114,7 @@ const SearchHistoryComponent =
                     <View style={styles.contentContainer}>
                         <View style={styles.header}>
                             <Text style={styles.title}>Search History</Text>
-                            <TouchableOpacity onPress={clearHistory}>
+                            <TouchableOpacity onPress={clearHistoryAlert}>
                                 <Text style={styles.clearButton}>Clear All</Text>
                             </TouchableOpacity>
                         </View>
